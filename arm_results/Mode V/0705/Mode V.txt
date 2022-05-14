@@ -1,0 +1,4 @@
+Trained for 1M steps
+Dense NN [512,512,256,128]
+timesteps/eo = 8000
+Goal = [1,0,0.5]

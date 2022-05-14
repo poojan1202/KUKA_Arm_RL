@@ -1,0 +1,6 @@
+06/05
+First 3*500,000 training with ep length = 5000
+last 3*500,000 trained with ep lenth = 8000
+goal = 0.5,0,0.5
+
+07/05

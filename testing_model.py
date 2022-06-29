@@ -11,12 +11,12 @@ from stable_baselines3 import SAC
 
 
 
-env = gym.make('PointToPoint-v0',gui=True)
+env = gym.make('PointToPoint-v0',gui=True,mode='T',record=True)
 
-#model = PPO.load("arm_0505_01.zip", env=env,custom_objects={"learning_rate": 0.0,
-#            "lr_schedule": lambda _: 0.0,
-#            "clip_range": lambda _: 0.0,})
-model = PPO.load("arm_0505_02.zip", env=env)
+model = PPO.load("logs/rl_model_3055480_steps.zip", env=env,custom_objects={"learning_rate": 0.0,
+            "lr_schedule": lambda _: 0.0,
+            "clip_range": lambda _: 0.0,})
+#model = PPO.load("trial.zip", env=env)
 
 rew = []
 
@@ -25,12 +25,21 @@ for i in range(1):
     obs = env.reset()
     while not done:
         action, _state =model.predict(obs)
+        #action = np.array([0,0,0,0,0,0,0])
         obs,reward,done,_ = env.step(action)
+        print(reward)
+        print(obs)
+        print(action)
+        #print(action)
         if i==0:
             rew.append(reward)
 
 t = np.arange(len(rew))
+print(sum(rew))
 
 fig,ax = plt.subplots()
 ax.plot(t,rew)
 plt.show()
+#goal: [0.4,0,1.1]  loc6:  [0.44738302 0.04233105 1.11781087]
+#goal: [0.6,0,0.9]  loc6:  [0.5669553  0.07910315 1.04583075]
+#goal: [0.3,0,1.2]  loc6:  [0.27454447 0.03467133 1.20632827]

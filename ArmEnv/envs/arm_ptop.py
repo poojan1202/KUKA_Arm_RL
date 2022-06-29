@@ -13,21 +13,23 @@ from ArmEnv.ents.goal import Goal
 class PointToPoint(gym.Env):
     metadata = {'render_modes':['human']}
 
-    def __init__(self,gui=False,mode='T',record=False):
+    def __init__(self,gui=False,mode='T',record=False,T_sens = 200, V_sens=1):
         self.mode = mode
         self.record = record
 
 
         # the ranges for action spaces was decided based on tinkering done in testing2.py
         if(mode == 'T'):
+            print('TORQUE CONTROL')
             self.action_space = gym.spaces.box.Box(
-                low = np.array([-200, -200, -200, -200, -200, -200,-200]),
-                high = np.array([200,  200,  200,  200,  200,  200, 200])
+                low = np.array([-1, -1, -1, -1, -1, -1,-1]),
+                high = np.array([1,  1,  1,  1,  1,  1, 1])
             )
         elif(mode == 'V'):
+            print("VELOCITY CONTROL")
             self.action_space = gym.spaces.box.Box(
-                low = np.array([-0.01, -0.01, -0.01, -0.01, -0.01, -0.01,-0.01]),
-                high = np.array([0.01,  0.01,  0.01,  0.01,  0.01,  0.01, 0.01])
+                low = np.array([-1, -1, -1, -1, -1, -1,-1]),
+                high = np.array([1,  1,  1,  1,  1,  1, 1])
             )
         else:
             self.action_space = gym.spaces.box.Box(
@@ -35,8 +37,10 @@ class PointToPoint(gym.Env):
                 high = np.array([5,  5,  5,  5,  5,  5, 5])
             )
         self.observation_space = gym.spaces.box.Box(    #change later
-            low = np.array([-100,-10, -100,-10, -100,-10, -100,-10, -100,-10, -100,-10, -100,-10]),
-            high = np.array([100, 10,  100, 10,  100, 10,  100, 10,  100, 10,  100, 10,  100, 10])
+            # low=np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]),
+            # high=np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+            low = np.array([-3.14,-3.14,-3.14,-3.14,-3.14,-3.14,-3.14,-10,-10,-10,-10,-10,-10]),
+            high = np.array([3.14, 3.14, 3.14, 3.14, 3.14, 3.14, 3.14, 10, 10, 10, 10, 10, 10])
         )
 
 
@@ -51,12 +55,15 @@ class PointToPoint(gym.Env):
 
         ## SUBJECT TO CHANGE
         self.timesteps = 0
-        #original__self.max_timesteps = 5000
-        self.max_timesteps = 5000
+        self.max_timesteps = 6500
+        self.T_sens = T_sens
+        self.V_sens = V_sens
         self.arm = None
         #self.goal = None
         #self.goal_box = None #named as such becoz the random coordinates are named goal here
         self.done = False
+        self.goal = [0.4,0.4,0.9]
+        #self.goal = [0.4,0.4,1.1]
         #self.prev_dist_to_goal = None
         self.rendered_image = None
         self.render_rot_matrix = None
@@ -69,8 +76,8 @@ class PointToPoint(gym.Env):
     def step(self,action):
         
         self.timesteps += 1
-        for i in range(4):
-            self.arm.apply_action(action,self.mode)
+        for i in range(4):          #ADD THIS AS AN ARGUMENT TO ENV CONSTRUCTOR
+            self.arm.apply_action(action,self.mode,torque_sens=self.T_sens,vel_sens=self.V_sens)
             p.stepSimulation()
         arm_ob = self.arm.get_observation()
         reward = 0  #initialize reward 0
@@ -79,7 +86,10 @@ class PointToPoint(gym.Env):
         
         eeloc = p.getLinkState(self.arm.arm,6)[0] # 6th link is end effector (probably)
 
-        reward = -1*np.linalg.norm(np.array(eeloc)-np.array([0.5,0,0.5]))
+        reward = -1*np.linalg.norm(np.array(eeloc)-np.array(self.goal))
+        rel = np.array(eeloc)-np.array(self.goal)
+        if abs(rel[0])<0.05 and abs(rel[1])<0.05 and abs(rel[2])<0.05:
+            reward=0
 
         if self.timesteps > self.max_timesteps:
             self.done = True
@@ -93,15 +103,15 @@ class PointToPoint(gym.Env):
         p.resetSimulation(self.client)
         p.setGravity(0,0,-10)
         # Reload Plane and Car
-        self.arm = Arm(self.client)
+        self.arm = Arm(self.client,)
         Plane(self.client)
-        Goal(self.client,[0.5,0,0.5])
+        Goal(self.client,self.goal)
 
 
         # Set Random Goal   #this will not be used as position of goal is hardcoded in goal.py
         x = (self.np_random.uniform(5, 9) if self.np_random.randint(2) else self.np_random.uniform(-5,-9))
         y = (self.np_random.uniform(5, 9) if self.np_random.randint(2) else self.np_random.uniform(-5,-9))
-        self.goal = (x,y)
+        #self.goal = (x,y)
         self.done = False
 
         #self.goal_box = Goal(self.client, self.goal)

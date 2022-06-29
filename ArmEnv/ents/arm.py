@@ -1,4 +1,5 @@
 import pybullet as p
+import numpy as np
 
 
 class Arm:
@@ -21,15 +22,17 @@ class Arm:
     def get_ids(self):
         return self.client, self.id
 
-    def apply_action(self, action, mode):
+    def apply_action(self, action, mode, torque_sens, vel_sens):
         ## CHANGE
         ## Make mode changeable
         
         if(mode == 'T'):
             mode = p.TORQUE_CONTROL
+            action = action*torque_sens
             p.setJointMotorControlArray(self.arm,self.joints,mode,forces = action,physicsClientId = self.client)
         elif(mode == 'V'):
             mode = p.VELOCITY_CONTROL
+            action = action*vel_sens
             p.setJointMotorControlArray(self.arm,self.joints,mode,targetVelocities = action,physicsClientId = self.client)
 
         #p.setJointMotorControlArray(self.arm,self.joints,mode,forces = action,physicsClientId = self.client)
@@ -40,9 +43,21 @@ class Arm:
         ## CHANGE
 
         obs = []
+        self.goal = [0.4, 0.4, 0.8]
+        #self.goal = [0.4,0.4,1.1]
         for i in self.joints:
             pos,vel,_,_ = p.getJointState(self.arm,i,physicsClientId = self.client)
             obs.append(pos)
-            obs.append(vel)
+            #obs.append(vel)
+        loc6 = np.array(p.getLinkState(self.arm,6)[0])
+        vel6 = np.array(p.getLinkState(self.arm,6,computeLinkVelocity=1)[6])
+
+        for i in range(3):
+            rel = self.goal[i]-loc6[i]
+            obs.append(rel)
+        for i in range(3):
+            obs.append(vel6[i])
+
+        print('loc6: ',loc6)
 
         return obs

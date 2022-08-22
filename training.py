@@ -13,8 +13,8 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3 import SAC
 
-env = gym.make('PointToPoint-v0',mode='T',T_sens = 200)
-env = Monitor(env,'monitor_2906_1')
+env = gym.make('PointToPoint-v0',mode='P',P_sens=1)
+env = Monitor(env,'monitor_2208_1')
 
 eval_callback = EvalCallback(env, best_model_save_path='./logs/',
                              log_path='./logs/', eval_freq=65000,
@@ -24,18 +24,18 @@ checkpoint_callback = CheckpointCallback(save_freq=97500, save_path='./logs/',
 callback = CallbackList([checkpoint_callback, eval_callback])
 
 #model = SAC('MlpPolicy',env,verbose=1,device='cuda')
-policy_kwargs = dict(ortho_init=False,activation_fn=th.nn.ReLU,net_arch=[dict(pi=[512, 512,256,128], vf=[512,512,265,128])])
-model = PPO.load('logs/rl_model_2957980_steps.zip',env)
-#model = PPO('MlpPolicy',env,policy_kwargs=policy_kwargs,verbose=1,learning_rate=0.0001)
+policy_kwargs = dict(ortho_init=False,activation_fn=th.nn.ReLU,net_arch=[dict(pi=[512,512,256,128], vf=[512,512,265,128])])
+#model = PPO.load('logs/rl_model_3835480_steps.zip',env)
+model = PPO('MlpPolicy',env,policy_kwargs=policy_kwargs,verbose=1,learning_rate=0.0001)
 #model.learn(3250000,callback=callback,reset_num_timesteps=False)
-model.learn(162500,callback=callback,reset_num_timesteps=False)
+model.learn(1300000,callback=callback,reset_num_timesteps=False)
 
 t = env.get_episode_rewards()
-model.save("arm_2906_1_modeT_new")
+model.save("arm_2208_modeT")
 del model
 
 
-file_name = "rewards_2906_1_new.pkl"
+file_name = "rewards_2208.pkl"
 op_file = open(file_name,'wb')
 pickle.dump(t, op_file)
 op_file.close()

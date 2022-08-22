@@ -22,7 +22,7 @@ class Arm:
     def get_ids(self):
         return self.client, self.id
 
-    def apply_action(self, action, mode, torque_sens, vel_sens):
+    def apply_action(self, action, mode, torque_sens, vel_sens, pos_sens):
         ## CHANGE
         ## Make mode changeable
         
@@ -34,6 +34,10 @@ class Arm:
             mode = p.VELOCITY_CONTROL
             action = action*vel_sens
             p.setJointMotorControlArray(self.arm,self.joints,mode,targetVelocities = action,physicsClientId = self.client)
+        elif(mode == 'P'):
+            mode = p.POSITION_CONTROL
+            action = action*pos_sens
+            p.setJointMotorControlArray(self.arm,self.joints,mode,targetPositions=action,physicsClientId=self.client)
 
         #p.setJointMotorControlArray(self.arm,self.joints,mode,forces = action,physicsClientId = self.client)
         
@@ -43,21 +47,23 @@ class Arm:
         ## CHANGE
 
         obs = []
-        self.goal = [0.4, 0.4, 0.8]
+        self.goal = [0.3, -0.5, 1.1]
         #self.goal = [0.4,0.4,1.1]
         for i in self.joints:
             pos,vel,_,_ = p.getJointState(self.arm,i,physicsClientId = self.client)
             obs.append(pos)
             #obs.append(vel)
-        loc6 = np.array(p.getLinkState(self.arm,6)[0])
-        vel6 = np.array(p.getLinkState(self.arm,6,computeLinkVelocity=1)[6])
+        #loc6 = np.array(p.getLinkState(self.arm,6)[0])
+        #vel6 = np.array(p.getLinkState(self.arm,6,computeLinkVelocity=1)[6])
 
-        for i in range(3):
-            rel = self.goal[i]-loc6[i]
-            obs.append(rel)
-        for i in range(3):
-            obs.append(vel6[i])
+        #for i in range(3):
+        #    rel = self.goal[i]-loc6[i]
+        #    obs.append(rel)
+        #for i in range(3):
+        #    obs.append(vel6[i])
+        for i in range(6):
+            obs.append(0)
 
-        print('loc6: ',loc6)
+        #print('loc6: ',loc6)
 
         return obs

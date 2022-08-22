@@ -11,9 +11,9 @@ from stable_baselines3 import SAC
 
 
 
-env = gym.make('PointToPoint-v0',gui=True,mode='T',record=True)
+env = gym.make('PointToPoint-v0',gui=True,mode='P',record=True)
 
-model = PPO.load("logs/rl_model_3055480_steps.zip", env=env,custom_objects={"learning_rate": 0.0,
+model = PPO.load("logs/rl_model_390000_steps.zip", env=env,custom_objects={"learning_rate": 0.0,
             "lr_schedule": lambda _: 0.0,
             "clip_range": lambda _: 0.0,})
 #model = PPO.load("trial.zip", env=env)
@@ -39,6 +39,9 @@ print(sum(rew))
 
 fig,ax = plt.subplots()
 ax.plot(t,rew)
+ax.set_title("Testing")
+ax.set_xlabel("Timesteps")
+ax.set_ylabel("Rewards")
 plt.show()
 #goal: [0.4,0,1.1]  loc6:  [0.44738302 0.04233105 1.11781087]
 #goal: [0.6,0,0.9]  loc6:  [0.5669553  0.07910315 1.04583075]

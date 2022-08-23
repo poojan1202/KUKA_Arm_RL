@@ -13,8 +13,8 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3 import SAC
 
-env = gym.make('PointToPoint-v0',mode='P',P_sens=1)
-env = Monitor(env,'monitor_2208_1')
+env = gym.make('PointToPoint-v0',mode='P',P_sens=1,P_max_force=60)
+env = Monitor(env,'monitor_2308')
 
 eval_callback = EvalCallback(env, best_model_save_path='./logs/',
                              log_path='./logs/', eval_freq=65000,
@@ -31,11 +31,11 @@ model = PPO('MlpPolicy',env,policy_kwargs=policy_kwargs,verbose=1,learning_rate=
 model.learn(1300000,callback=callback,reset_num_timesteps=False)
 
 t = env.get_episode_rewards()
-model.save("arm_2208_modeT")
+model.save("arm_2308_modeP")
 del model
 
 
-file_name = "rewards_2208.pkl"
+file_name = "rewards_2308.pkl"
 op_file = open(file_name,'wb')
 pickle.dump(t, op_file)
 op_file.close()

@@ -13,7 +13,7 @@ from ArmEnv.ents.goal import Goal
 class PointToPoint(gym.Env):
     metadata = {'render_modes':['human']}
 
-    def __init__(self,gui=False,mode='T',record=False,T_sens = 200, V_sens=1, P_sens = 1):
+    def __init__(self,gui=False,mode='T',record=False,T_sens = 200, V_sens=1, P_sens = 1, P_max_force=60):
         self.mode = mode
         self.record = record
 
@@ -45,8 +45,8 @@ class PointToPoint(gym.Env):
         self.observation_space = gym.spaces.box.Box(    #change later
             # low=np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]),
             # high=np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
-            low = np.array([-3.14,-3.14,-3.14,-3.14,-3.14,-3.14,-3.14,-10,-10,-10,-10,-10,-10]),
-            high = np.array([3.14, 3.14, 3.14, 3.14, 3.14, 3.14, 3.14, 10, 10, 10, 10, 10, 10])
+            low = np.array([-3.14,-3.14,-3.14,-3.14,-3.14,-3.14,-3.14,-10,-10,-10,-10,-10,-10,-10,-2,-2,-2]),
+            high = np.array([3.14, 3.14, 3.14, 3.14, 3.14, 3.14, 3.14, 10, 10, 10, 10, 10, 10, 10, 2, 2, 2])
         )
 
 
@@ -65,6 +65,7 @@ class PointToPoint(gym.Env):
         self.T_sens = T_sens
         self.V_sens = V_sens
         self.P_sens = P_sens
+        self.P_max_force = P_max_force
         self.arm = None
         #self.goal = None
         #self.goal_box = None #named as such becoz the random coordinates are named goal here
@@ -88,24 +89,27 @@ class PointToPoint(gym.Env):
         
         self.timesteps += 1
         for i in range(4):          #ADD THIS AS AN ARGUMENT TO ENV CONSTRUCTOR
-            self.arm.apply_action(action,self.mode,torque_sens=self.T_sens,vel_sens=self.V_sens,pos_sens=self.P_sens)
+            self.arm.apply_action(action,self.mode,torque_sens=self.T_sens,vel_sens=self.V_sens,pos_sens=self.P_sens,P_mx_fr=self.P_max_force)
             p.stepSimulation()
         arm_ob = self.arm.get_observation()
+        arm_ob[-3] = self.goal[0]
+        arm_ob[-2] = self.goal[1]
+        arm_ob[-1] = self.goal[2]
         reward = 0  #initialize reward 0
 
         #pos,_= p.getBasePositionAndOrientation(self.goal_box.box)
         
         eeloc = p.getLinkState(self.arm.arm,6)[0] # 6th link is end effector (probably)
 
-        loc6 = np.array(p.getLinkState(self.arm.arm, 6)[0])
-        vel6 = np.array(p.getLinkState(self.arm.arm, 6, computeLinkVelocity=1)[6])
+        #loc6 = np.array(p.getLinkState(self.arm.arm, 6)[0])
+        #vel6 = np.array(p.getLinkState(self.arm.arm, 6, computeLinkVelocity=1)[6])
 
-        for i in range(3):
-            rel = self.goal[i] - loc6[i]
-            arm_ob[i+7]=rel
+        #for i in range(3):
+        #    rel = self.goal[i] - loc6[i]
+        #    arm_ob[i+7]=rel
             #arm_ob.append(rel)
-        for i in range(3):
-            arm_ob[i+10]=vel6[i]
+        #for i in range(3):
+        #    arm_ob[i+10]=vel6[i]
             #arm_ob.append(vel6[i])
 
 
@@ -116,7 +120,7 @@ class PointToPoint(gym.Env):
 
         if self.timesteps > self.max_timesteps:
             self.done = True
-            print('loc6:', loc6)
+            #print('loc6:', loc6)
 
             
         return arm_ob, reward, self.done, dict()
